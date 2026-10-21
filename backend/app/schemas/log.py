@@ -6,7 +6,7 @@ Follows the same patterns as Event and Run schemas.
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -15,17 +15,25 @@ from pydantic import BaseModel, field_validator
 
 
 class LogResponse(BaseModel):
-    """Safe public representation of a log."""
+    """Safe public representation of a log.
+
+    The ORM attribute is `metadata_` because `metadata` is reserved by
+    SQLAlchemy's declarative base; the API still exposes it as `metadata`.
+    """
 
     id: int
     run_id: int
     agent_id: int
     severity: str
     message: str
-    metadata: Optional[dict]
+    log_metadata: Optional[dict] = Field(
+        default=None,
+        validation_alias=AliasChoices("metadata_", "metadata"),
+        serialization_alias="metadata",
+    )
     timestamp: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "populate_by_name": True}
 
 
 class LogListItem(BaseModel):
@@ -39,25 +47,6 @@ class LogListItem(BaseModel):
     timestamp: datetime
 
     model_config = {"from_attributes": True}
-
-
-class LogSeverity(str):
-    """Allowed severity values for Log model validation."""
-
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
-
-    model_config = {"validate_by_name": True}
-
-    @classmethod
-    def __validators__(cls, v):
-        """Validate that severity is one of the allowed values."""
-        if v not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
-            raise ValueError("Severity must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL")
-        return v
 
 
 # ---------------------------------------------------------------------------

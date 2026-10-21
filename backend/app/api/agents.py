@@ -2,13 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_
 
+from app.core.config import settings
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.agent import Agent
 from app.schemas.agent import AgentCreate, AgentUpdate, AgentResponse, AgentListItem
 
-router = APIRouter(prefix="/api/agents", tags=["Agents"])
+router = APIRouter(prefix=f"{settings.API_V1_STR}/agents", tags=["Agents"])
 
 
 # ---------------------------------------------------------------------------
@@ -35,7 +36,7 @@ def _check_ownership(db: Session, agent_id: int, current_user: User) -> Agent:
 # CREATE: POST /api/agents
 # ---------------------------------------------------------------------------
 
-@router.post("/", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
 def create_agent(
     payload: AgentCreate,
     db: Session = Depends(get_db),
@@ -62,7 +63,7 @@ def create_agent(
 # LIST: GET /api/agents
 # ---------------------------------------------------------------------------
 
-@router.get("/", response_model=list[AgentListItem])
+@router.get("", response_model=list[AgentListItem])
 def list_agents(
     skip: int = 0,
     limit: int = 100,

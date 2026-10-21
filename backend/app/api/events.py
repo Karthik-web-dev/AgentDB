@@ -9,15 +9,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.agent import Agent
 from app.models.run import Run
 from app.models.event import Event
-from app.schemas.event import EventCreate, EventUpdate, EventResponse, EventListItem
+from app.schemas.event import EventCreate, EventResponse, EventListItem
 
-router = APIRouter(prefix="/api/events", tags=["Events"])
+router = APIRouter(prefix=f"{settings.API_V1_STR}/events", tags=["Events"])
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +54,8 @@ def _check_event_ownership(db: Session, event_id: int, current_user: User) -> Ev
             detail="Event not found.",
         )
     # Now verify the run belongs to user
-    return _check_run_ownership(db, event.run_id, current_user)
+    _check_run_ownership(db, event.run_id, current_user)  # raises 404 if not owned
+    return event
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +63,7 @@ def _check_event_ownership(db: Session, event_id: int, current_user: User) -> Ev
 # ---------------------------------------------------------------------------
 
 @router.post(
-    "/", response_model=EventResponse, status_code=status.HTTP_201_CREATED
+    "", response_model=EventResponse, status_code=status.HTTP_201_CREATED
 )
 def create_event(
     payload: EventCreate,
@@ -115,7 +117,7 @@ def get_event(
 # LIST: GET /api/events
 # ---------------------------------------------------------------------------
 
-@router.get("/", response_model=list[EventListItem])
+@router.get("", response_model=list[EventListItem])
 def list_events(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -125,47 +127,16 @@ def list_events(
     Events are filtered through the run → agent → user ownership chain.
     Returns only events from runs belonging to the authenticated user's agents.
     """
-    # First get all runs owned by the user
-    stmt = select(Run).join(Run.agent).where(Agent.user_id == current_user.id)
+    # One join query: events -> runs -> agents, filtered by the owner.
+    # (Replaces an earlier two-query version that loaded every run into memory.)
+    stmt = (
+        select(Event)
+        .join(Event.run)
+        .join(Run.agent)
+        .where(Agent.user_id == current_user.id)
+        .order_by(Event.timestamp.desc())
+    )
     result = db.execute(stmt)
-    user_runs = result.scalars().all()
-    user_run_ids = {run.id for run in user_runs}
-
-    # List events only from user's runs
-    if not user_run_ids:
-        return []
-
-    stmt = select(Event).where(Event.run_id.in_(user_run_ids))
-    result = db.execute(stmt)
-    events = result.scalars().all()
-    return events
+    return result.scalars().all()
 
 
-# ---------------------------------------------------------------------------
-# PATCH: PATCH /api/events/{event_id}
-# ---------------------------------------------------------------------------
-
-@router.patch(
-    "/{event_id}", response_model=EventResponse
-)
-def update_event(
-    event_id: int,
-    payload: EventUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> EventResponse:
-    """Partial update of an event owned by the authenticated user.
-
-    Only event_name and payload can be updated.
-    run_id and event_type cannot be changed after creation.
-    """
-    event = _check_event_ownership(db, event_id, current_user)
-
-    # Apply only the fields that were provided (partial update)
-    update_data = payload.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(event, key, value)
-
-    db.commit()
-    db.refresh(event)
-    return event

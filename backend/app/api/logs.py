@@ -12,6 +12,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_, and_, func, cast, String as SQLString
+from app.core.config import settings
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
@@ -21,7 +22,7 @@ from app.models.log import Log
 from app.schemas.log import LogResponse, LogListItem, LogList
 
 
-router = APIRouter(prefix="/api/logs", tags=["Logs"])
+router = APIRouter(prefix=f"{settings.API_V1_STR}/logs", tags=["Logs"])
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +57,8 @@ def _check_log_ownership(db: Session, log_id: int, current_user: User) -> Log:
             detail="Log not found.",
         )
     # Verify the log's run belongs to user
-    return _check_run_ownership(db, log.run_id, current_user)
+    _check_run_ownership(db, log.run_id, current_user)  # raises 404 if not owned
+    return log
 
 
 # ---------------------------------------------------------------------------
@@ -83,12 +85,12 @@ def list_logs(
     """
     if skip < 0:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=422,
             detail="skip must be >= 0",
         )
     if limit < 1 or limit > 100:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=422,
             detail="limit must be between 1 and 100",
         )
 

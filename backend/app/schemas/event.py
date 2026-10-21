@@ -53,28 +53,6 @@ class EventCreate(BaseModel):
         return v
 
 
-class EventUpdate(BaseModel):
-    """Payload accepted for PATCH /api/events/{event_id} — partial update.
-
-    Only event_name and payload can be updated.
-    run_id and event_type cannot be changed after creation.
-    """
-
-    event_name: Optional[str] = None
-    payload: Optional[dict] = None
-
-    @field_validator("event_name")
-    @classmethod
-    def event_name_optional_valid(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None:
-            v = v.strip()
-            if not v:
-                raise ValueError("event_name must not be empty if provided.")
-            if len(v) > 100:
-                raise ValueError("event_name must be at most 100 characters.")
-        return v
-
-
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------

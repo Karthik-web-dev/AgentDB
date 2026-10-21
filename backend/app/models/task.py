@@ -28,4 +28,4 @@ class Task(Base):
 
     # Relationships
     agent: Mapped["Agent"] = relationship("Agent", back_populates="tasks")
-    runs: Mapped[List["Run"]] = relationship("Run", back_populates="task")
+    runs: Mapped[List["Run"]] = relationship("Run", back_populates="task", overlaps="agent,runs,task")

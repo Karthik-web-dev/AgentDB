@@ -578,17 +578,20 @@ Backend tests will primarily use Pytest.
 
 🐳 Running with Docker
 
-Docker Compose will eventually provide the complete development environment:
+Docker Compose runs the whole stack: the React frontend, the FastAPI backend and MySQL.
 
-Frontend
-   │
-Backend
-   │
-MySQL
+```
+cp .env.docker.example .env      # set MYSQL_ROOT_PASSWORD and SECRET_KEY
+docker compose up -d --build
+```
 
-The exact setup commands will be documented in:
+Then open http://localhost:8080. The setup guide covers the local (non-Docker) setup, the
+database requirements and the test suite:
 
 docs/setup.md
+
+The database design is described in docs/novelties.md (the features built into MySQL) and
+docs/query-plans.md (the query plans that are verified by tests).
 
 🚧 Development Roadmap
 

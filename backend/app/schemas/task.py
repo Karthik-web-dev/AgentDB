@@ -120,6 +120,7 @@ class TaskListItem(BaseModel):
     """Minimal task representation for list endpoints."""
 
     id: int
+    agent_id: int
     title: str
     status: str
     priority: str

@@ -1,0 +1,54 @@
+# AgentDB: MySQL + FastAPI backend + React frontend.
+#
+#   cp .env.docker.example .env     # then edit the values
+#   docker compose up -d --build
+#
+# Frontend: http://localhost:8080      API docs: http://localhost:8080/docs
+# Health check: http://localhost:8080/health
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: agentdb
+    # Required by the project's triggers and scheduled events (see docs/setup.md).
+    command: ["--log-bin-trust-function-creators=1", "--event-scheduler=ON"]
+    volumes:
+      - agentdb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@db:3306/agentdb
+      DEBUG: "False"
+      BACKEND_CORS_ORIGINS: '["http://localhost:8080"]'
+    # First start: build the schema and load the demo dataset. Later starts keep existing data.
+    command: >
+      sh -c "python -m app.db.bootstrap --url \"$$DATABASE_URL\" --if-missing &&
+             python -m app.demo_data &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  agentdb-data:

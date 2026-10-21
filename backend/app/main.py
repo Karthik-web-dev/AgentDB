@@ -10,14 +10,19 @@ from app.api.tasks import router as tasks_router
 from app.api.runs import router as runs_router
 from app.api.events import router as events_router
 from app.api.logs import router as logs_router
+from app.api.metrics import router as metrics_router
+from app.api.alerts import router as alerts_router
+from app.api.audit import router as audit_router
+from app.api.analytics import router as analytics_router
+from app.api.errors import router as errors_router
 
 app = FastAPI(
     title=settings.APP_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    debug=settings.DEBUG
+    debug=settings.DEBUG,
 )
 
-# Set up CORS middleware
+# CORS: only the origins listed in BACKEND_CORS_ORIGINS may call the API from a browser.
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
@@ -27,19 +32,23 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-# Mount routers
+# Mount routers (every router carries its own API_V1_STR prefix)
 app.include_router(auth_router)
 app.include_router(agents_router)
 app.include_router(tasks_router)
 app.include_router(runs_router)
 app.include_router(events_router)
 app.include_router(logs_router)
+app.include_router(metrics_router)
+app.include_router(alerts_router)
+app.include_router(audit_router)
+app.include_router(analytics_router)
+app.include_router(errors_router)
 
 
 @app.get("/health", tags=["System"])
 def health_check(db: Session = Depends(get_db)):
     """Health check endpoint confirming backend service status and database ping."""
-    db_status = "disconnected"
     try:
         db.execute(text("SELECT 1"))
         db_status = "connected"
@@ -50,5 +59,5 @@ def health_check(db: Session = Depends(get_db)):
         "status": "healthy",
         "app": settings.APP_NAME,
         "environment": "development" if settings.DEBUG else "production",
-        "database": db_status
+        "database": db_status,
     }

@@ -1,16 +1,24 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_, or_
+from typing import List
 
+from sqlalchemy import select, and_, or_, text
+
+from app.core.config import settings
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.agent import Agent
 from app.models.task import Task
 from app.models.run import Run
-from app.schemas.run import RunCreate, RunUpdate, RunResponse, RunListItem
+from app.schemas.run import RunCreate, RunUpdate, RunResponse, RunListItem, SubtreeCost, TraceNode
 
-router = APIRouter(prefix="/api/runs", tags=["Runs"])
+router = APIRouter(prefix=f"{settings.API_V1_STR}/runs", tags=["Runs"])
+
+# Statuses after which a run is finished and completed_at must be set.
+TERMINAL_RUN_STATUSES = {"completed", "failed", "cancelled"}
 
 
 # ---------------------------------------------------------------------------
@@ -69,7 +77,7 @@ def _check_run_ownership(db: Session, run_id: int, current_user: User) -> Run:
 # ---------------------------------------------------------------------------
 
 @router.post(
-    "/", response_model=RunResponse, status_code=status.HTTP_201_CREATED
+    "", response_model=RunResponse, status_code=status.HTTP_201_CREATED
 )
 def create_run(
     payload: RunCreate,
@@ -98,10 +106,15 @@ def create_run(
                 detail="Task not found or does not belong to the specified agent.",
             )
 
+    # A parent run must be one of the caller's runs (the database enforces the same rule).
+    if payload.parent_run_id is not None:
+        _check_run_ownership(db, payload.parent_run_id, current_user)
+
     # Create the run — user_id is derived from the agent, not accepted from client
     db_run = Run(
         agent_id=payload.agent_id,
         task_id=payload.task_id,
+        parent_run_id=payload.parent_run_id,
         status=payload.status or "running",
         execution_time_ms=payload.execution_time_ms,
         error_message=payload.error_message,
@@ -117,7 +130,7 @@ def create_run(
 # ---------------------------------------------------------------------------
 
 @router.get(
-    "/", response_model=list[RunListItem]
+    "", response_model=list[RunListItem]
 )
 def list_runs(
     skip: int = 0,
@@ -184,6 +197,52 @@ def update_run(
     for key, value in update_data.items():
         setattr(run, key, value)
 
+    # A run that reaches a terminal state gets its completion time recorded once.
+    if run.status in TERMINAL_RUN_STATUSES and run.completed_at is None:
+        run.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+
     db.commit()
     db.refresh(run)
     return run
+
+# ---------------------------------------------------------------------------
+# TRACE: GET /api/v1/runs/{run_id}/trace  (novelty 7)
+# ---------------------------------------------------------------------------
+
+@router.get("/{run_id}/trace", response_model=List[TraceNode])
+def get_run_trace(
+    run_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> List[TraceNode]:
+    """The run and every run it started (directly or indirectly), depth-first.
+
+    The recursive walk runs inside sp_run_trace, which checks ownership in its anchor row.
+    """
+    _check_run_ownership(db, run_id, current_user)
+    rows = db.execute(
+        text("CALL sp_run_trace(:user_id, :run_id)"),
+        {"user_id": current_user.id, "run_id": run_id},
+    ).mappings().all()
+    return [TraceNode(**row) for row in rows]
+
+
+# ---------------------------------------------------------------------------
+# SUBTREE COST: GET /api/v1/runs/{run_id}/subtree-cost  (novelty 7 + 6)
+# ---------------------------------------------------------------------------
+
+@router.get("/{run_id}/subtree-cost", response_model=SubtreeCost)
+def get_run_subtree_cost(
+    run_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> SubtreeCost:
+    """Total cost of a run and all of its descendants (attribution method: rollup)."""
+    _check_run_ownership(db, run_id, current_user)
+    row = db.execute(
+        text("CALL sp_run_subtree_cost(:user_id, :run_id)"),
+        {"user_id": current_user.id, "run_id": run_id},
+    ).mappings().one_or_none()
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Run not found or not owned by user.")
+    return SubtreeCost(**row)

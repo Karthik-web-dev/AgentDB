@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.db.session import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
@@ -9,7 +10,7 @@ from app.models.agent import Agent
 from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse, TaskListItem
 
-router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
+router = APIRouter(prefix=f"{settings.API_V1_STR}/tasks", tags=["Tasks"])
 
 
 # ---------------------------------------------------------------------------
@@ -59,7 +60,7 @@ def _check_task_ownership(db: Session, task_id: int, current_user: User) -> Task
 # ---------------------------------------------------------------------------
 
 @router.post(
-    "/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED
+    "", response_model=TaskResponse, status_code=status.HTTP_201_CREATED
 )
 def create_task(
     payload: TaskCreate,
@@ -92,7 +93,7 @@ def create_task(
 # LIST: GET /api/tasks
 # ---------------------------------------------------------------------------
 
-@router.get("/", response_model=list[TaskListItem])
+@router.get("", response_model=list[TaskListItem])
 def list_tasks(
     skip: int = 0,
     limit: int = 100,

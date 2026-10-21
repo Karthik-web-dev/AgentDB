@@ -16,6 +16,7 @@ class RunCreate(BaseModel):
 
     agent_id: int
     task_id: Optional[int] = None
+    parent_run_id: Optional[int] = None  # the run that started this one (must be yours)
     status: Optional[str] = None
     execution_time_ms: Optional[int] = None
     error_message: Optional[str] = None
@@ -25,6 +26,13 @@ class RunCreate(BaseModel):
     def agent_id_positive(cls, v: int) -> int:
         if v <= 0:
             raise ValueError("agent_id must be a positive integer.")
+        return v
+
+    @field_validator("parent_run_id")
+    @classmethod
+    def parent_run_id_positive(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and v <= 0:
+            raise ValueError("parent_run_id must be a positive integer or NULL.")
         return v
 
     @field_validator("task_id")
@@ -98,6 +106,8 @@ class RunResponse(BaseModel):
     id: int
     agent_id: int
     task_id: Optional[int]
+    parent_run_id: Optional[int]
+    error_signature_id: Optional[int]
     status: str
     started_at: datetime
     completed_at: Optional[datetime]
@@ -106,6 +116,26 @@ class RunResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class TraceNode(BaseModel):
+    """One run in a trace tree, in depth-first order. depth 0 is the requested run."""
+
+    run_id: int
+    parent_run_id: Optional[int]
+    agent_id: int
+    status: str
+    started_at: datetime
+    execution_time_ms: Optional[int]
+    depth: int
+
+
+class SubtreeCost(BaseModel):
+    run_id: int
+    runs_in_tree: int
+    unpriced_runs: int
+    subtree_cost_usd: float
+    attribution_method: str  # always "rollup" for this response
 
 
 class RunListItem(BaseModel):

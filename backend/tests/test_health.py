@@ -1,25 +1,18 @@
-from fastapi.testclient import TestClient
-from app.main import app
-from app.db.session import get_db
-
-client = TestClient(app)
+"""Health endpoint: confirms the API process and the live MySQL connection."""
 
 
-def test_health_endpoint():
-    """Test GET /health API endpoint structure and mock database connection response."""
-    def override_get_db():
-        class MockDB:
-            def execute(self, query):
-                return [(1,)]
-        yield MockDB()
+def test_health_reports_database_connected(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "healthy"
+    assert body["app"] == "AgentDB"
+    assert body["database"] == "connected"
 
-    app.dependency_overrides[get_db] = override_get_db
-    try:
-        response = client.get("/health")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "healthy"
-        assert data["app"] == "AgentDB"
-        assert data["database"] == "connected"
-    finally:
-        app.dependency_overrides.clear()
+
+def test_openapi_is_served_under_api_prefix(client):
+    response = client.get("/api/v1/openapi.json")
+    assert response.status_code == 200
+    paths = response.json()["paths"]
+    for expected in ("/api/v1/auth/register", "/api/v1/agents", "/api/v1/runs", "/api/v1/logs", "/api/v1/metrics"):
+        assert any(p.startswith(expected) for p in paths), f"missing route family {expected}"

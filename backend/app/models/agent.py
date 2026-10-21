@@ -33,6 +33,6 @@ class Agent(Base):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="agents")
     tasks: Mapped[List["Task"]] = relationship("Task", back_populates="agent")
-    runs: Mapped[List["Run"]] = relationship("Run", back_populates="agent")
+    runs: Mapped[List["Run"]] = relationship("Run", back_populates="agent", overlaps="task,runs,agent")
     logs: Mapped[List["Log"]] = relationship("Log", back_populates="agent")
     alerts: Mapped[List["Alert"]] = relationship("Alert", back_populates="agent", cascade="all, delete-orphan")
