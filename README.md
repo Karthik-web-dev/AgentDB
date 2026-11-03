@@ -2,9 +2,11 @@ AgentDB
 
 AI-Agent Observability & Structured Logging Platform powered by a relational database
 
-AgentDB is a full-stack observability and structured logging platform designed for monitoring AI-agent workflows, executions, events, logs, metrics, alerts, and audit activity through a unified dashboard.
+AgentDB is a full-stack platform for running OpenRouter-backed agent chats and monitoring executions, events, logs, metrics, alerts, and audit activity through a unified dashboard. Chat messages are persisted per agent and recent turns are reused as model context.
 
-The project is built with React + TypeScript, FastAPI, and MySQL, with the relational database serving as the core of the system. It is designed to demonstrate advanced Database Management System (DBMS) concepts through a practical, real-world application rather than a basic CRUD project.
+The project is built with React + TypeScript, FastAPI, and MySQL, with the relational database serving as the core of the system. It demonstrates DBMS concepts through a practical application, and includes an optional OpenRouter-backed agent chat flow with persistent per-agent conversation context.
+
+AgentDB also includes an optional OpenRouter chat path. Configure `OPENROUTER_API_KEY` on the backend, register an agent using a provider model ID (for example `openai/gpt-4o-mini`), and use **Agent Chat**. Messages are saved against that agent; older turns are compressed into a bounded summary while recent turns are sent verbatim. The original messages remain stored. See [HOW_TO_RUN.md](HOW_TO_RUN.md) for setup.
 
 🚀 Project Overview
 

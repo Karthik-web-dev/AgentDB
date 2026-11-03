@@ -9,6 +9,7 @@ from app.models.alert import Alert
 from app.models.alert_firing import AlertFiring
 from app.models.audit_log import AuditLog
 from app.models.error_signature import ErrorSignature
+from app.models.memory import AgentMemory, AgentMemorySummary
 
 __all__ = [
     "User",
@@ -22,4 +23,6 @@ __all__ = [
     "AlertFiring",
     "AuditLog",
     "ErrorSignature",
+    "AgentMemory",
+    "AgentMemorySummary",
 ]

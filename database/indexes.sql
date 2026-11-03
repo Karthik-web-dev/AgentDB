@@ -1,6 +1,3 @@
--- AgentDB Indexes Specification (MySQL 8.0+)
--- Demonstrates: Indexing strategies for query optimization, composite indexes, and performance tuning
-
 USE agentdb;
 
 -- 1. Log Timestamp Index: Accelerates log explorer date/time range filtering queries

@@ -5,7 +5,7 @@ from app.core.config import settings
 
 # Initialize SQLAlchemy engine with MySQL pool settings
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.sqlalchemy_database_url,
     pool_pre_ping=True,
     pool_recycle=3600,
     echo=settings.DEBUG

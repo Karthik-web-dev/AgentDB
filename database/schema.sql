@@ -1,12 +1,3 @@
--- AgentDB Database Schema (MySQL 8.0+)
--- Architectural Principles:
--- 1. Primary Keys, Foreign Keys, Referential Integrity, NOT NULL, UNIQUE, CHECK constraints, DEFAULT values.
--- 2. Normalization: 3NF compliant core entities.
--- 3. Pragmatic Denormalization: `logs.agent_id` is intentionally retained alongside `logs.run_id` 
---    to support high-performance direct agent-based log filtering without requiring multi-table joins.
--- 4. Historical Data Protection: Deletion of users, agents, tasks, and runs uses RESTRICT constraints to protect 
---    historical observability runs, events, metrics, logs, and audit trails.
-
 CREATE DATABASE IF NOT EXISTS agentdb;
 USE agentdb;
 
@@ -56,11 +47,6 @@ CREATE TABLE IF NOT EXISTS tasks (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Runs (Executions) Table
--- Note: Uses a composite foreign key (task_id, agent_id) referencing tasks(id, agent_id) with ON DELETE RESTRICT
--- to enforce at the database level that:
--- 1. A run may have task_id = NULL for standalone executions.
--- 2. When task_id is populated, runs.agent_id MUST match tasks.agent_id.
--- 3. Referenced tasks cannot be deleted, preserving historical execution data.
 CREATE TABLE IF NOT EXISTS runs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     task_id INT NULL,
@@ -88,8 +74,6 @@ CREATE TABLE IF NOT EXISTS events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. Logs Table
--- Note: `agent_id` is an intentional pragmatic denormalization stored alongside `run_id`
--- to allow rapid direct agent-based log filtering without requiring joins on every search query.
 CREATE TABLE IF NOT EXISTS logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     run_id INT NOT NULL,
@@ -115,8 +99,6 @@ CREATE TABLE IF NOT EXISTS metrics (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. Alerts Table
--- Note: `agent_id` is nullable. If `agent_id` IS NULL, the alert rule applies globally across all agents.
--- If `agent_id` is specified, the alert targets that specific agent.
 CREATE TABLE IF NOT EXISTS alerts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

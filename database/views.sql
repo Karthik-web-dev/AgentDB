@@ -1,6 +1,3 @@
--- AgentDB Database Views (MySQL 8.0+)
--- Demonstrates: Database Views, Complex Joins, Aggregation (COUNT, AVG), CASE statements, and Query Abstraction
-
 USE agentdb;
 
 -- 1. Agent Performance View: Pre-aggregates run metrics, success rates, average latency, and error counts per agent

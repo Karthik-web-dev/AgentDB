@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { SWATCH, THEMES, useApp } from '../state'
 
 const links = [
-  ['/dashboard', 'Dashboard'], ['/agents', 'Agents'], ['/tasks', 'Tasks'], ['/runs', 'Runs'],
+  ['/dashboard', 'Dashboard'], ['/agents', 'Agents'], ['/chat', 'Agent Chat'], ['/memory', 'Memory'], ['/tasks', 'Tasks'], ['/runs', 'Runs'],
   ['/logs', 'Log Explorer'], ['/metrics', 'Metrics'], ['/alerts', 'Alerts'], ['/audit', 'Audit Trail'], ['/themes', 'Themes'], ['/settings', 'Settings'],
 ]
 
