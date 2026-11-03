@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard'
 import { Agents, Tasks } from './pages/Manage'
 import { Alerts, Audit, Logs, Metrics, Runs, Settings } from './pages/Explore'
 import Themes from './pages/Themes'
+import Chat from './pages/Chat'
+import Memory from './pages/Memory'
 
 export default function App() {
   return (
@@ -13,6 +15,8 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/agents" element={<Agents />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/memory" element={<Memory />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/runs" element={<Runs />} />
         <Route path="/logs" element={<Logs />} />

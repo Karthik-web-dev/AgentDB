@@ -1,6 +1,3 @@
--- AgentDB Database Triggers (MySQL 8.0+)
--- Demonstrates: Database Triggers, Automated Audit Logging, Event Hooking, and Data Integrity Enforcement
-
 USE agentdb;
 
 DELIMITER //

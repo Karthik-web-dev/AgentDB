@@ -20,6 +20,7 @@ h1,h2,h3 { text-transform: uppercase; letter-spacing: -.02em; font-weight: 700; 
 .btn:active { transform: translate(4px,4px); box-shadow: 0 0 0 var(--ink); }
 .btn.alt { background: var(--a2); color:#fff; } .btn.alt2 { background: var(--a3); } .btn.ghost { background: var(--surface); color: var(--ink); }
 input, select { font: inherit; width: 100%; padding: 10px 12px; background: var(--surface); color: var(--ink); border: 3px solid var(--ink); outline: none; }
+textarea { font: inherit; width: 100%; padding: 10px 12px; background: var(--surface); color: var(--ink); border: 3px solid var(--ink); outline: none; resize: vertical; }
 input:focus, select:focus { box-shadow: 4px 4px 0 var(--a2); }
 label { display:block; font-weight:700; text-transform:uppercase; font-size:12px; margin: 12px 0 4px; }
 .badge { display:inline-block; padding: 2px 8px; border: 2px solid var(--ink); font-size: 12px; font-weight: 700; text-transform: uppercase; color:#111; background: var(--a3); }

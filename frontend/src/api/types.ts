@@ -136,3 +136,32 @@ export interface AgentCost {
 
 /** What the agent list endpoint returns (no description, owner or timestamps). */
 export type AgentSummary = Pick<Agent, 'id' | 'name' | 'model' | 'environment' | 'status' | 'version'>
+
+export interface MemoryTurn {
+  id: number
+  run_id: number
+  role: 'user' | 'assistant'
+  content: string
+  created_at: string
+}
+
+export interface ChatResult {
+  run_id: number
+  model: string
+  reply: string
+  memory_messages_used: number
+  context_original_chars: number
+  context_sent_chars: number
+  context_reduction_pct: number
+  summary_updated: boolean
+}
+
+export interface MemorySummary {
+  agent_id: number
+  summary: string
+  summarized_through_id: number
+  source_message_count: number
+  source_chars: number
+  summary_chars: number
+  reduction_pct: number
+}

@@ -15,6 +15,9 @@ from app.api.alerts import router as alerts_router
 from app.api.audit import router as audit_router
 from app.api.analytics import router as analytics_router
 from app.api.errors import router as errors_router
+from app.api.chat import router as chat_router
+from app.models.memory import AgentMemory, AgentMemorySummary
+from app.db.session import engine
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -44,6 +47,14 @@ app.include_router(alerts_router)
 app.include_router(audit_router)
 app.include_router(analytics_router)
 app.include_router(errors_router)
+app.include_router(chat_router)
+
+
+@app.on_event("startup")
+def ensure_agent_memory_table():
+    """Create the additive memory table for installations bootstrapped before this feature."""
+    AgentMemory.__table__.create(bind=engine, checkfirst=True)
+    AgentMemorySummary.__table__.create(bind=engine, checkfirst=True)
 
 
 @app.get("/health", tags=["System"])

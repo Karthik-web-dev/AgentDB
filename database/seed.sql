@@ -1,6 +1,3 @@
--- AgentDB Realistic Development Seed Data (MySQL 8.0+)
--- Provides populated operational data across all 9 relational entities for development, testing, and analytics
-
 USE agentdb;
 
 -- Clear existing data in correct FK order

@@ -21,6 +21,7 @@ from pathlib import Path
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL, make_url
+from app.core.config import settings
 
 DATABASE_DIR = Path(__file__).resolve().parents[3] / "database"
 
@@ -160,7 +161,7 @@ def build_database(database_url: str, include_seed: bool = False, reset: bool = 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build an AgentDB MySQL database from database/*.sql")
-    parser.add_argument("--url", required=True, help="SQLAlchemy URL including the database name")
+    parser.add_argument("--url", default=settings.sqlalchemy_database_url, help="SQLAlchemy URL including the database name")
     parser.add_argument("--seed", action="store_true", help="also load database/seed.sql")
     parser.add_argument("--reset", action="store_true", help="drop the database first if it exists")
     parser.add_argument("--if-missing", action="store_true", help="do nothing if the schema is already built (safe for container start-up)")

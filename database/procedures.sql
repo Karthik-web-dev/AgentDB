@@ -1,8 +1,3 @@
--- AgentDB Stored Procedures (MySQL 8.0+)
--- Demonstrates: Stored Procedures, Input Parameters, Variable Declarations, Complex Queries, and Database Aggregation
--- Note on Transactions: Backend API endpoints will handle application transaction boundaries (e.g. creating a run
--- initiates an atomic multi-write transaction across `runs`, `events`, `logs`, and `metrics`).
-
 USE agentdb;
 
 DELIMITER //

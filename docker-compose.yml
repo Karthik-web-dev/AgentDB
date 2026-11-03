@@ -27,12 +27,25 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
-      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@db:3306/agentdb
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: agentdb
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_SITE_URL: ${OPENROUTER_SITE_URL:-http://localhost:8080}
+      OPENROUTER_APP_NAME: ${OPENROUTER_APP_NAME:-AgentDB}
+      AGENT_MEMORY_MESSAGES: ${AGENT_MEMORY_MESSAGES:-20}
+      AGENT_MEMORY_RECENT_MAX_CHARS: ${AGENT_MEMORY_RECENT_MAX_CHARS:-24000}
+      AGENT_MEMORY_SUMMARY_MAX_CHARS: ${AGENT_MEMORY_SUMMARY_MAX_CHARS:-5000}
+      AGENT_MEMORY_SUMMARIZE_CHUNK_CHARS: ${AGENT_MEMORY_SUMMARIZE_CHUNK_CHARS:-5000}
+      LLM_MAX_OUTPUT_TOKENS: ${LLM_MAX_OUTPUT_TOKENS:-2048}
       DEBUG: "False"
       BACKEND_CORS_ORIGINS: '["http://localhost:8080"]'
     # First start: build the schema and load the demo dataset. Later starts keep existing data.
     command: >
-      sh -c "python -m app.db.bootstrap --url \"$$DATABASE_URL\" --if-missing &&
+      sh -c "python -m app.db.bootstrap --if-missing &&
              python -m app.demo_data &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
     depends_on:
